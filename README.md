@@ -29,7 +29,7 @@ This plugin takes advantage of ActiveRecord underneath. For `host`, `port`, `dat
 
       <table>
         table table1
-        column_mapping 'timestamp:created_at,fluentdata1:dbcol1,fluentdata2:dbcol2,fluentdata3:dbcol3'
+        insertmapping 'timestamp,tag'
         # This is the default table because it has no "pattern" argument in <table>
         # The logic is such that if all non-default <table> blocks
         # do not match, the default one is chosen.

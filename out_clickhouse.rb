@@ -51,7 +51,6 @@ module Fluent::Plugin
 				super()
 				@pattern = Fluent::MatchPattern.create(pattern)
 				@log = log 
-				@log.warn "sssfdsdsdsdsd"
 				@enable_fallback = enable_fallback
 			end
 
@@ -60,7 +59,14 @@ module Fluent::Plugin
 				@mapping = parse_column_mapping(@insertmapping)
 			end
 
-			def init(base_model)
+      def init(base_model)
+        
+        #zamani: check and create table if not exist
+        if !(ActiveRecord::Base.connection.table_exists? @table)
+          sqlstr="CREATE TABLE "+table+" (IDT datetime) ENGINE = MergeTree() PARTITION BY (toYYYYMM(IDT)) ORDER BY IDT"
+          ActiveRecord::Base.connection.execute(sqlstr)
+        end
+
 				# See SQLInput for more details of following code
 				table_name = @table
 				@model = Class.new(base_model) do
@@ -93,13 +99,15 @@ module Fluent::Plugin
 					end
 				}
 				begin
+          
 
 					#zamani: get column of clickhouse table
 					dbfiled=[]
 					ActiveRecord::Base.connection.columns(table).each do |c|
 						dbfiled<<c.name
 					end
-					#zamani: find all col that not exist on db
+          
+          #zamani: find all col that not exist on db
 					#zamani: fluentd insert cols + log cols - current db col
 					missingfiled=@mapping + @origdata.keys - dbfiled
 					#zamani: add missing col to db
@@ -111,7 +119,10 @@ module Fluent::Plugin
 						else
 							sqlstr=sqlstr + x +" Nullable(String)"
 						end
-						ActiveRecord::Base.connection.execute(sqlstr)
+            ActiveRecord::Base.connection.execute(sqlstr)
+            # *********** TODO model update
+            # TODO: Send this this records (cunck) to the delay queue.
+
 					}
 					@model.import(records)
 
