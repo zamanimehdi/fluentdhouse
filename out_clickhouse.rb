@@ -25,7 +25,7 @@ module Fluent::Plugin
     desc "remove the given prefix from the events"
     config_param :remove_tag_prefix, :string, default: nil
     desc "enable fallback"
-    config_param :enable_fallback, :bool, default: true
+    config_param :enable_fallback, :bool, default: false
     desc "synchronizes thread access to a limited number of database connections"
     config_param :pool, :integer, default: 10
     desc "synchronizes thread access to a limited number of database connections"
@@ -96,7 +96,7 @@ module Fluent::Plugin
             #cleaning data for bad UTF char
             data.each { |record|
               with_scrub(record)
-              replacements = { "'" => "_", "\'" => "_", "," => "_" }
+              replacements = { "\'" => "_", "," => "_" }
               record.gsub(Regexp.union(replacements.keys), replacements)
             }
 
