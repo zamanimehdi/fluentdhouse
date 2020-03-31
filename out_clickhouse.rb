@@ -92,16 +92,14 @@ module Fluent::Plugin
         chunk.msgpack_each { |tag, time, data|
           begin
             @origdata = data
-            #TODO: get cleaning parameter dynamically
-            #cleaning data
+
+            #cleaning data for bad UTF char
             data.each { |record|
-              if record.is_a?(String)
-                record.force_encoding("ISO-8859-1") if record.encoding == Encoding::BINARY
-                record.encode!("utf-8", "ISO-8859-1", :invalid => :replace, :undef => :replace)
-              end
-              #replacements = { "'" => "_", "\'" => "_" }
-              #record.gsub(Regexp.union(replacements.keys), replacements)
+              with_scrub(record)
+              replacements = { "'" => "_", "\'" => "_", "," => "_" }
+              record.gsub(Regexp.union(replacements.keys), replacements)
             }
+
             records << @model.new(data)
           rescue #mising col in model
             #zamani: change the model and db and match it to data
@@ -127,7 +125,6 @@ module Fluent::Plugin
               @model.connection.execute(sqlstr) #model and db update
             }
             @model.reset_column_information
-            puts @model.column_names
 
             # Import data to db
             records << @model.new(data)
@@ -159,11 +156,27 @@ module Fluent::Plugin
           if @enable_fallback
             # ignore other exceptions to use Fluentd retry mechanizm
             @log.warn "Got deterministic error. Fallback to one-by-one import", error: e
+
             one_by_one_import(records)
           else
             $log.warn "Got deterministic error. Fallback is disabled", error: e
             raise e
           end
+        end
+      end
+
+      def with_scrub(string)
+        begin
+          string =~ //
+          return string
+        rescue ArgumentError => e
+          raise e unless e.message.index("invalid byte sequence in") == 0
+          if string.frozen?
+            string = string.dup.scrub!(" ")
+          else
+            string.scrub!(" ")
+          end
+          retry
         end
       end
 
