@@ -28,7 +28,7 @@ module Fluent::Plugin
     config_param :enable_fallback, :bool, default: true
     desc "synchronizes thread access to a limited number of database connections"
     config_param :pool, :integer, default: 10
-    desc "specifies the timeout to establish a new connection to the database before failing"
+    desc "synchronizes thread access to a limited number of database connections"
     config_param :timeout, :integer, default: 5000
 
     config_section :buffer do
@@ -113,6 +113,7 @@ module Fluent::Plugin
             #zamani: find all col that not exist on db
             #zamani: fluentd insert cols + log cols - current db col
             missingfileddb = @mapping.keys + @origdata.keys - dbfiled
+
             #zamani: add missing col to db
             sqlstr = ""
             missingfileddb.each { |x|
@@ -125,6 +126,9 @@ module Fluent::Plugin
               sqlstr = sqlstr + x + " Nullable(String)"
               @model.connection.execute(sqlstr) #model and db update
             }
+            @model.reset_column_information
+            puts @model.column_names
+
             # Import data to db
             records << @model.new(data)
           end
