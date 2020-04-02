@@ -1,4 +1,4 @@
-# fluentdhouse
+# Fluentdhouse
  Fluentd output plugin to ClickHouse and automatic construction the structure for columns and tables that do not exist. 
  
 # Feature
@@ -38,28 +38,16 @@ This plugin takes advantage of ActiveRecord underneath. For `host`, `port`, `dat
         table table1
         primary_key IDT
         insertmapping 'timestamp,tag'
-        # This is the default table because it has no "pattern" argument in <table>
-        # The logic is such that if all non-default <table> blocks
-        # do not match, the default one is chosen.
-        # The default table is required.
       </table>
 
       <table hello.*> # You can pass the same pattern you use in match statements.
         table table2
         primary_key IDT
-        # This is the non-default table. It is chosen if the tag matches the pattern
-        # AFTER remove_tag_prefix is applied to the incoming event. For example, if
-        # the message comes in with the tag my.rdb.hello.world, "remove_tag_prefix my.rdb"
-        # makes it "hello.world", which gets matched here because of "pattern hello.*".
       </table>
       
       <table hello.world>
         table table3
         primary_key IDT
-        # This is the second non-default table. You can have as many non-default tables
-        # as you wish. One caveat: non-default tables are matched top-to-bottom and
-        # the events go into the first table it matches to. Hence, this particular table
-        # never gets any data, since the above "hello.*" subsumes "hello.world".
       </table>
     </match>
 
