@@ -2,7 +2,7 @@
  Fluentd output plugin to ClickHouse and automatic construction the structure for columns and tables that do not exist. 
  
 # Feature
- Use like nosql as clickhouse db without no worries about the type and structure of the event entry.
+ *  Use like nosql as clickhouse db without no worries about the type and structure of the event entry.
  *  Use bulk insertaion for Increase event input speed.
  *  fluentd capabilities for parallel threads and queues.
  *  Use the database clickhouse buffer engine feature to increase speed.
