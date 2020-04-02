@@ -3,10 +3,10 @@
  
 # Feature
  Use like nosql as clickhouse db without no worries about the type and structure of the event entry.
- Use bulk insertaion for Increase event input speed.
- fluentd capabilities for parallel threads and queues.
- Use the database clickhouse buffer engine feature to increase speed.
- Automatically routing event to appropriate table based on event tags.
+ *  Use bulk insertaion for Increase event input speed.
+ *  fluentd capabilities for parallel threads and queues.
+ *  Use the database clickhouse buffer engine feature to increase speed.
+ *  Automatically routing event to appropriate table based on event tags.
 
 
 # installation
