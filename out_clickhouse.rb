@@ -25,7 +25,7 @@ module Fluent::Plugin
     desc "remove the given prefix from the events"
     config_param :remove_tag_prefix, :string, default: nil
     desc "enable fallback"
-    config_param :enable_fallback, :bool, default: false
+    config_param :enable_fallback, :bool, default: true
     desc "synchronizes thread access to a limited number of database connections"
     config_param :pool, :integer, default: 10
     desc "synchronizes thread access to a limited number of database connections"
@@ -67,13 +67,13 @@ module Fluent::Plugin
         if !(ActiveRecord::Base.connection.table_exists? @table)
           sqlstr = "CREATE TABLE " + table + " (IDT datetime) ENGINE = MergeTree() PARTITION BY (toYYYYMM(IDT)) ORDER BY IDT"
           ActiveRecord::Base.connection.execute(sqlstr)
+          @log.info "new table created :" + table
         end
 
         # See SQLInput for more details of following code
         table_name = @table
         @model = Class.new(base_model) do
           self.table_name = table_name
-          #zamani: set primery key
           self.primary_key = @primary_key
           self.inheritance_column = "_never_use_output_"
         end
@@ -82,9 +82,6 @@ module Fluent::Plugin
         base_model.const_set(class_name, @model)
         model_name = ActiveModel::Name.new(@model, nil, class_name)
         @model.define_singleton_method(:model_name) { model_name }
-
-        # TODO: check column_names and table schema
-        # @model.column_names
       end
 
       def import(chunk)
@@ -92,14 +89,6 @@ module Fluent::Plugin
         chunk.msgpack_each { |tag, time, data|
           begin
             @origdata = data
-
-            #cleaning data for bad UTF char
-            data.each { |record|
-              with_scrub(record)
-              replacements = { "\'" => "_", "," => "_" }
-              record.gsub(Regexp.union(replacements.keys), replacements)
-            }
-
             records << @model.new(data)
           rescue #mising col in model
             #zamani: change the model and db and match it to data
@@ -123,13 +112,17 @@ module Fluent::Plugin
               x.gsub(Regexp.union(replacements.keys), replacements)
               sqlstr = sqlstr + x + " Nullable(String)"
               @model.connection.execute(sqlstr) #model and db update
+              @log.info "Add new col to db : " + x
             }
-            @model.reset_column_information
+            if !sqlstr.eql?("")
+              @model.reset_column_information
+            end
 
-            # Import data to db
+            # Import data to model
             records << @model.new(data)
           end
         }
+        @log.debug "Convert chunk to model complete."
         begin
           #zamani: change the db and match it to data
           #zamani: get column of clickhouse table
@@ -150,33 +143,19 @@ module Fluent::Plugin
             x.gsub(Regexp.union(replacements.keys), replacements)
             sqlstr = sqlstr + x + " Nullable(String)"
             @model.connection.execute(sqlstr)
+            @log.info "Add new col to db : " + x
           }
           @model.import(records)
+          @log.debug "model save to db complete."
         rescue ActiveRecord::StatementInvalid, ActiveRecord::Import::MissingColumnError => e #missing col in db
           if @enable_fallback
             # ignore other exceptions to use Fluentd retry mechanizm
             @log.warn "Got deterministic error. Fallback to one-by-one import", error: e
-
             one_by_one_import(records)
           else
             $log.warn "Got deterministic error. Fallback is disabled", error: e
             raise e
           end
-        end
-      end
-
-      def with_scrub(string)
-        begin
-          string =~ //
-          return string
-        rescue ArgumentError => e
-          raise e unless e.message.index("invalid byte sequence in") == 0
-          if string.frozen?
-            string = string.dup.scrub!(" ")
-          else
-            string.scrub!(" ")
-          end
-          retry
         end
       end
 
@@ -252,7 +231,6 @@ module Fluent::Plugin
 
     def start
       super
-
       config = {
         adapter: @adapter,
         host: @host,
@@ -293,6 +271,15 @@ module Fluent::Plugin
     end
 
     def format(tag, time, record)
+      # merge array to string
+      record.each { |k, v|
+        if (v.class == Array)
+          record[k] = v.join(",")
+
+          #cleaning data for bad UTF char
+          record[k] = record[k].force_encoding("ISO-8859-1").encode("UTF-8")
+        end
+      }
       record = inject_values_to_record(tag, time, record)
       [tag, time, record].to_msgpack
     end
