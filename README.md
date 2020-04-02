@@ -3,10 +3,22 @@
  
 # Feature
  *  Use like nosql as clickhouse db without no worries about the type and structure of the event entry.
- *  Use bulk insertaion for Increase event input speed.
+ *  Use bulk insertion for increase event input speed. All the spread insert queries related to specific event types may be routed to a distributed table, packed to chunk and inserted and route to the custom node.
  *  fluentd capabilities for parallel threads and queues.
- *  Use the database clickhouse buffer engine feature to increase speed.
- *  Automatically routing event to appropriate table based on event tags.
+ In the example below, we will have 100 thread for parallelize outputs and each bulkinsert connection sends a command containing 40 records. And in less than 10 seconds, each thread will send its events.
+
+```
+         <buffer>
+		      chunk_limit_records 40
+		      flush_thread_count 100
+		      flush_interval 10s
+        </buffer>
+
+```
+
+ *  Use the clickhouse buffer engine feature to increase speed.
+ *  Automatically routing event to appropriate table and multiple distinct ClickHouse clusters depending on the tag of event. 
+  
 
 
 # installation
@@ -65,4 +77,4 @@ This plugin takes advantage of ActiveRecord underneath. For `host`, `port`, `dat
 * **table** RDBM table name
 * **insertcolumn**: [Required] Record to table schema mapping. The format is consists of `key` values are separated by `,`.
 * **primary_key** RDBMS table primary key
-* **\<table pattern\>**: the pattern to which the incoming event's tag (after it goes through `remove_tag_prefix`, if given). The patterns should follow the same syntax as [that of \<match\>](https://docs.fluentd.org/configuration/config-file#how-match-patterns-work). **Exactly one \<table\> element must NOT have this parameter so that it becomes the default table to store data**.
+* **\<table pattern\>**: the pattern to which the incoming event's tag (after it goes through `remove_tag_prefix`, if given). The patterns should follow the same syntax as [that of \<match\>](https://docs.fluentd.org/configuration/config-file#how-match-patterns-work). Exactly one \<table\> element must NOT have this parameter so that it becomes the default table to store data.
