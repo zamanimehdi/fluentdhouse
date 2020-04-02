@@ -10,12 +10,14 @@
 
 
 # installation
-step 1- copy plugin to fluentd plugin folder
+step 1- Copy plugin to fluentd plugin folder
 
-step 2- clickhouse Active Record required
+step 2- Install the following items 
 
 ```
+gem install activerecord
 gem install clickhouse-activerecord
+
 ```
 
 ## How It Works
