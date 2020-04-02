@@ -1,5 +1,13 @@
 # fluentdhouse
- Fluentd output plugin to ClickHouse and auto shema generation
+ Fluentd output plugin to ClickHouse and automatic construction the structure for columns and tables that do not exist. 
+ 
+# Feature
+ Use like nosql as clickhouse db without no worries about the type and structure of the event entry.
+ Use bulk insertaion for Increase event input speed.
+ fluentd capabilities for parallel threads and queues.
+ Use the database clickhouse buffer engine feature to increase speed.
+ Automatically routing event to appropriate table based on event tags.
+
 
 # installation
 step 1- copy plugin to fluentd plugin folder
@@ -12,7 +20,7 @@ gem install clickhouse-activerecord
 
 ## How It Works
 
-This plugin takes advantage of ActiveRecord underneath. For `host`, `port`, `database`, `adapter`, `username`, `password`, `socket` parameters, you can think of ActiveRecord's equivalent parameters.
+This plugin takes advantage of ActiveRecord underneath. For `host`, `port`, `database`, `username`, `password` parameters, you can think of ActiveRecord's equivalent parameters.
 
 ## Configuration
 
@@ -21,7 +29,6 @@ This plugin takes advantage of ActiveRecord underneath. For `host`, `port`, `dat
       host rdb_host
       port 3306
       database rdb_database
-      adapter mysql2_or_postgresql_or_etc
       username myusername
       password mypassword
       socket path_to_socket
@@ -29,6 +36,7 @@ This plugin takes advantage of ActiveRecord underneath. For `host`, `port`, `dat
 
       <table>
         table table1
+        primary_key IDT
         insertmapping 'timestamp,tag'
         # This is the default table because it has no "pattern" argument in <table>
         # The logic is such that if all non-default <table> blocks
@@ -38,6 +46,7 @@ This plugin takes advantage of ActiveRecord underneath. For `host`, `port`, `dat
 
       <table hello.*> # You can pass the same pattern you use in match statements.
         table table2
+        primary_key IDT
         # This is the non-default table. It is chosen if the tag matches the pattern
         # AFTER remove_tag_prefix is applied to the incoming event. For example, if
         # the message comes in with the tag my.rdb.hello.world, "remove_tag_prefix my.rdb"
@@ -46,6 +55,7 @@ This plugin takes advantage of ActiveRecord underneath. For `host`, `port`, `dat
       
       <table hello.world>
         table table3
+        primary_key IDT
         # This is the second non-default table. You can have as many non-default tables
         # as you wish. One caveat: non-default tables are matched top-to-bottom and
         # the events go into the first table it matches to. Hence, this particular table
@@ -56,10 +66,8 @@ This plugin takes advantage of ActiveRecord underneath. For `host`, `port`, `dat
 * **host** RDBMS host
 * **port** RDBMS port
 * **database** RDBMS database name
-* **adapter** RDBMS driver name. You should install corresponding gem before start (mysql2 gem for mysql2 adapter, pg gem for postgresql adapter, etc.)
 * **username** RDBMS login user name
 * **password** RDBMS login password
-* **socket** RDBMS socket path
 * **remove_tag_prefix** remove the given prefix from the events. (optional)
 
 \<table\> sections:

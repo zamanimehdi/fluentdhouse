@@ -13,7 +13,7 @@ module Fluent::Plugin
     desc "RDBMS port"
     config_param :port, :integer, default: nil
     desc "RDBMS driver name."
-    config_param :adapter, :string
+    config_param :adapter, :string, default: clickhouse
     desc "RDBMS login user name"
     config_param :username, :string, default: nil
     desc "RDBMS login password"
@@ -65,11 +65,11 @@ module Fluent::Plugin
 
         #zamani: check and create table if not exist
         if !(ActiveRecord::Base.connection.table_exists? @table)
-          sqlstr = "CREATE TABLE " + table + " (IDT datetime) ENGINE = MergeTree() PARTITION BY (toYYYYMM(IDT)) ORDER BY IDT"
+          sqlstr = "CREATE TABLE " + table + " (" + primary_key + " datetime) ENGINE = MergeTree() PARTITION BY (toYYYYMM(" + primary_key + ")) ORDER BY " + primary_key
           ActiveRecord::Base.connection.execute(sqlstr)
           @log.info "new table created :" + table
 
-          buffersqlstr = "CREATE TABLE " + "buffer_" + table + " (IDT datetime) ENGINE = Buffer(" + table + ", winlog_fb, 16, 10, 100, 10000, 1000000, 10000000, 100000000)"
+          buffersqlstr = "CREATE TABLE " + "buffer_" + table + " (" + primary_key + " datetime) ENGINE = Buffer(" + table + ", winlog_fb, 16, 10, 100, 10000, 1000000, 10000000, 100000000)"
           ActiveRecord::Base.connection.execute(buffersqlstr)
           @log.info "new buffer table created : buffer_" + table
         end
@@ -303,7 +303,7 @@ module Fluent::Plugin
     def write(chunk)
       ActiveRecord::Base.connection_pool.with_connection do
         @tables.each { |table|
-          if table.pattern.match(chunk.key)
+          if table.pattern.match(chunk.key) #TODO route table
             return table.import(chunk)
           end
         }
