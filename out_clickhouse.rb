@@ -68,6 +68,10 @@ module Fluent::Plugin
           sqlstr = "CREATE TABLE " + table + " (IDT datetime) ENGINE = MergeTree() PARTITION BY (toYYYYMM(IDT)) ORDER BY IDT"
           ActiveRecord::Base.connection.execute(sqlstr)
           @log.info "new table created :" + table
+
+          buffersqlstr = "CREATE TABLE " + "buffer_" + table + " (IDT datetime) ENGINE = Buffer(" + table + ", winlog_fb, 16, 10, 100, 10000, 1000000, 10000000, 100000000)"
+          ActiveRecord::Base.connection.execute(buffersqlstr)
+          @log.info "new buffer table created : buffer_" + table
         end
 
         # See SQLInput for more details of following code
@@ -113,6 +117,10 @@ module Fluent::Plugin
               sqlstr = sqlstr + x + " Nullable(String)"
               @model.connection.execute(sqlstr) #model and db update
               @log.info "Add new col to db : " + x
+
+              # buffer table update
+              sqlstr = "ALTER TABLE " + "buffer_" + table + " ADD COLUMN IF NOT EXISTS " + x + " Nullable(String)"
+              ActiveRecord::Base.connection.execute(sqlstr)
             }
             if !sqlstr.eql?("")
               @model.reset_column_information
@@ -144,6 +152,10 @@ module Fluent::Plugin
             sqlstr = sqlstr + x + " Nullable(String)"
             @model.connection.execute(sqlstr)
             @log.info "Add new col to db : " + x
+
+            # buffer table update
+            sqlstr = "ALTER TABLE " + "buffer_" + table + " ADD COLUMN IF NOT EXISTS " + x + " Nullable(String)"
+            ActiveRecord::Base.connection.execute(sqlstr)
           }
           @model.import(records)
           @log.debug "model save to db complete."
