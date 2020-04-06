@@ -13,7 +13,7 @@ module Fluent::Plugin
     desc "RDBMS port"
     config_param :port, :integer, default: nil
     desc "RDBMS driver name."
-    config_param :adapter, :string, default: clickhouse
+    config_param :adapter, :string, default: "clickhouse"
     desc "RDBMS login user name"
     config_param :username, :string, default: nil
     desc "RDBMS login password"
