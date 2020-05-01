@@ -5,11 +5,11 @@
  *  Use clickhouse db as like nosql as without no worries about the structure of the event entry.
  *  Use bulk insertion for increase event input speed. All the spread insert queries related to specific event types may be routed to a distributed table, packed to chunk and inserted and route to the custom node.
  *  fluentd capabilities for parallel threads and queues.
- In the example below, we will have 100 thread for parallelize outputs and each bulkinsert connection sends a command containing 40 records. And in less than 10 seconds, each thread will send its events.
+ In the example below, we will have 100 thread for parallelize outputs and each bulkinsert connection sends a command containing 4000 records. And in less than 10 seconds, each thread will send its events.
 
 ```
          <buffer>
-		      chunk_limit_records 40
+		      chunk_limit_records 4000
 		      flush_thread_count 100
 		      flush_interval 10s
         </buffer>
@@ -29,6 +29,7 @@ step 2- Install the following items
 ```
 gem install activerecord
 gem install clickhouse-activerecord
+gem install activerecord-import
 
 ```
 
