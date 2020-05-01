@@ -64,6 +64,7 @@ This plugin takes advantage of ActiveRecord underneath. For `host`, `port`, `dat
         table table3
         primary_key IDT
       </table>
+      
     </match>
 
 * **host** RDBMS host
@@ -78,4 +79,4 @@ This plugin takes advantage of ActiveRecord underneath. For `host`, `port`, `dat
 * **table** RDBM table name
 * **insertcolumn**: [Required] Record to table schema mapping. The format is consists of `key` values are separated by `,`.
 * **primary_key** RDBMS table primary key
-* **\<table pattern\>**: the pattern to which the incoming event's tag (after it goes through `remove_tag_prefix`, if given). The patterns should follow the same syntax as [that of \<match\>](https://docs.fluentd.org/configuration/config-file#how-match-patterns-work). Exactly one \<table\> element must NOT have this parameter so that it becomes the default table to store data.
+* **\<table pattern\>**: (This section is not currently active and will be added to the project in the future)the pattern to which the incoming event's tag (after it goes through `remove_tag_prefix`, if given). The patterns should follow the same syntax as [that of \<match\>](https://docs.fluentd.org/configuration/config-file#how-match-patterns-work). Exactly one \<table\> element must NOT have this parameter so that it becomes the default table to store data.
