@@ -157,8 +157,9 @@ module Fluent::Plugin
             sqlstr = "ALTER TABLE " + "buffer_" + table + " ADD COLUMN IF NOT EXISTS " + x + " Nullable(String)"
             ActiveRecord::Base.connection.execute(sqlstr)
           }
-          @model.import(records)
-          @log.debug "model save to db complete."
+          @log.debug "model (" + records.length.to_s + " records) saveing ..."
+		      @model.import(records)
+          @log.debug "model (" + records.length.to_s + " records) save to db complete."
         rescue ActiveRecord::StatementInvalid, ActiveRecord::Import::MissingColumnError => e #missing col in db
           if @enable_fallback
             # ignore other exceptions to use Fluentd retry mechanizm
